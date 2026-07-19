@@ -1,0 +1,70 @@
+import datetime
+
+class Book:
+    def __init__(self, book_id, title, author, copies=1):
+        self.book_id = book_id
+        self.title = title
+        self.author = author
+        self.copies = copies
+
+class Member:
+    def __init__(self, member_id, name, email):
+        self.member_id = member_id
+        self.name = name
+        self.email = email
+        self.borrowed_books = {}
+
+class LibrarySystem:
+    def __init__(self):
+        self.books = {}
+        self.members = {}
+
+    # --- Book Management ---
+    def add_book(self, book_id, title, author, copies=1):
+        self.books[book_id] = Book(book_id, title, author, copies)
+
+    def search_book(self, title):
+        return [book for book in self.books.values() if title.lower() in book.title.lower()]
+
+    # --- Member Management ---
+    def register_member(self, member_id, name, email):
+        self.members[member_id] = Member(member_id, name, email)
+
+    # --- Circulation ---
+    def borrow_book(self, member_id, book_id):
+        if book_id in self.books and self.books[book_id].copies > 0:
+            member = self.members[member_id]
+            due_date = datetime.date.today() + datetime.timedelta(days=14)
+            member.borrowed_books[book_id] = due_date
+            self.books[book_id].copies -= 1
+            print(f"{member.name} borrowed {self.books[book_id].title}, due on {due_date}")
+        else:
+            print("Book not available.")
+
+    def return_book(self, member_id, book_id):
+        member = self.members[member_id]
+        if book_id in member.borrowed_books:
+            due_date = member.borrowed_books.pop(book_id)
+            self.books[book_id].copies += 1
+            if datetime.date.today() > due_date:
+                print(f"Book returned late! Fine may apply.")
+            else:
+                print(f"Book returned on time.")
+        else:
+            print("This member did not borrow that book.")
+
+    # --- Automation ---
+    def check_overdue_books(self):
+        today = datetime.date.today()
+        for member in self.members.values():
+            for book_id, due_date in member.borrowed_books.items():
+                if today > due_date:
+                    print(f"Reminder: {member.name} has overdue book '{self.books[book_id].title}' (due {due_date})")
+
+# --- Example Usage ---
+library = LibrarySystem()
+library.add_book("B001", "Python Programming", "John Doe", 3)
+library.register_member("M001", "Alice", "alice@example.com")
+
+library.borrow_book("M001", "B001")
+library.check_overdue_books()
